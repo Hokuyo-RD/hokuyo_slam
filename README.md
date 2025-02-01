@@ -11,7 +11,7 @@
 これらのソースコードを改変して使用しました。実行用のbashファイルを北陽電機 髙橋が作成しました。
 
 ## Requirements
-Ubuntu 20.04
+Ubuntu 20.04 ROS1 Noetic
 
 This package is dependent on Eigen3, C++14, and pcl 1.14
 
