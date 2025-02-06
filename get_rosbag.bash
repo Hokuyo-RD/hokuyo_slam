@@ -15,6 +15,13 @@ if [ -z "$2" ]; then
   exit 1
 fi
 
+#------- カレントディレクトリの取得 -------
+CURRENT=$(cd $(dirname $0);pwd)
+echo current dir: $CURRENT
+rosbag_dir=$CURRENT/rosbag;
+echo rosbag dir: $rosbag_dir
+echo "All args are checked."
+
 # ファイルが存在するかチェック
 FILE=rosbag/$1
 if [ ! -f "$FILE" ]; then
@@ -24,13 +31,6 @@ else
   echo "rosbag file: $FILE exists."
 fi
 
-#------- カレントディレクトリの取得 -------
-CURRENT=$(cd $(dirname $0);pwd)
-echo current dir: $CURRENT
-rosbag_dir=$CURRENT/rosbag;
-echo rosbag dir: $rosbag_dir
-echo "All args are checked."
-
 sleep 1
 
-gnome-terminal -- bash -c "./rosbag_lio_fix_pc.bash $1 $2; bash"
+gnome-terminal -- bash -c "~/github/hokuyo_slam/rosbag_lio_fix_pc.bash $1 $2 $3; bash"

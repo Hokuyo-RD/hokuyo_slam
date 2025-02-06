@@ -28,13 +28,20 @@ fi
 CURRENT=$(cd $(dirname $0);pwd)
 echo current dir: $CURRENT
 rosbag_dir=$CURRENT/rosbag;
+map_dir=$CURRENT;
 echo rosbag dir: $rosbag_dir
-echo 'ouput directory_name: ' "$2"
+echo 'ouput directory_name: '"$2"
 echo 'rosbag file: ' "$1"
 echo "All args are checked."
 
 #------- config.csv 読み込み -------
-options=(`cat config/config.csv`)
+if [ "$3" = "" ]; then
+  options=(`cat config/config.csv`)
+  echo option: $options
+else
+  options=(`cat $3`)
+  echo option: $options
+fi
 
 for i in ${!options[@]}; do
  if [ $i -gt 0 ]; then

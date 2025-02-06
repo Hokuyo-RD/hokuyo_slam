@@ -15,6 +15,13 @@ if [ -z "$2" ]; then
   exit 1
 fi
 
+#------- カレントディレクトリの取得 -------
+CURRENT=$(cd $(dirname $0);pwd)
+echo current dir: $CURRENT
+rosbag_dir=$CURRENT/rosbag;
+echo rosbag dir: $rosbag_dir
+echo "All args are checked."
+
 # ファイルが存在するかチェック
 FILE=rosbag/$1
 if [ ! -f "$FILE" ]; then
@@ -24,15 +31,14 @@ else
   echo "rosbag file: $FILE exists."
 fi
 
-#------- カレントディレクトリの取得 -------
-CURRENT=$(cd $(dirname $0);pwd)
-echo current dir: $CURRENT
-rosbag_dir=$CURRENT/rosbag;
-echo rosbag dir: $rosbag_dir
-echo "All args are checked."
-
 #------- config.csv 読み込み -------
-options=(`cat config/config.csv`)
+if [ "$3" = "" ]; then
+  options=(`cat config/config.csv`)
+  echo option: $options
+else
+  options=(`cat $3`)
+  echo option: $options
+fi
 
 for i in ${!options[@]}; do
  if [ $i -gt 0 ]; then
@@ -44,6 +50,7 @@ done
 gnss_topic="${option_arr[0]}";
 pointcloud_topic="${option_arr[1]}";
 lio_topic="${option_arr[2]}";
+run_lio="${option_arr[3]}";
 
 sleep 3
 
@@ -52,7 +59,9 @@ source $ROS_WORKSPACE/devel/setup.bash
 
 gnome-terminal --tab -t "Tab 0" -- bash -c "roscore; bash"
 sleep 2
-gnome-terminal --tab -t "hokuyo_lio" -- bash -c "roslaunch hokuyo_lio hokuyo_lio_node_with_yaml.launch; bash"
+if [ "x${run_lio}" = "xtrue" ]; then
+ gnome-terminal --tab -t "hokuyo_lio" -- bash -c "roslaunch hokuyo_lio hokuyo_lio_node_with_yaml.launch; bash"
+fi
 gnome-terminal --tab -t "rosbag play" -- bash -c "cd ${rosbag_dir}; rosbag play $1; bash"
-gnome-terminal --tab -t "sync_lio_pc" -- bash -c "echo sync_lio_pc working!!; rosrun sync_lio_pc sync_lio_pc; bash"
+gnome-terminal --tab -t "sync_lio_pc" -- bash -c "echo sync_lio_pc working!!; rosrun sync_lio_pc sync_lio_pc _point_topic:=${pointcloud_topic}; bash" # rosrun を落としてもroscoreが起動しているとrosrun でパラメータを変更しても残る。
 gnome-terminal --tab -t "rosbag record" -- bash -c "cd ${rosbag_dir}; echo timeout $((`rosbag info ${rosbag_dir}/$1 | grep -i "duration" | awk '{ print $3 }' | sed -e 's/[^0-9]//g'`)) rosbag record -O $2 $gnss_topic $pointcloud_topic $lio_topic; timeout $((`rosbag info ${rosbag_dir}/$1 | grep -i "duration" | awk '{ print $3 }' | sed -e 's/[^0-9]//g'`-10)) rosbag record -O $2 $gnss_topic $pointcloud_topic $lio_topic; bash"
