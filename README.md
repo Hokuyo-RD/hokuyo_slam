@@ -24,6 +24,9 @@ sudo apt-get -y install qtcreator
 sudo apt-get -y install libqt5x11extras5-dev
 
 # vtk
+# ダウンロードはすべて~/github以下にお願いします。
+mkdir ~/github
+cd ~/github
 wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz
 tar -xvf VTK-8.2.0.tar.gz
 cd VTK-8.2.0
@@ -34,6 +37,7 @@ export CMAKE_PREFIX_PATH=/opt/vtk8
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
 
 # pcl 1.14
+cd ~/github
 wget https://github.com/PointCloudLibrary/pcl/releases/download/pcl-1.14.1/source.tar.gz -O pcl.tar.gz
 tar -xvf pcl.tar.gz
 cd pcl
@@ -45,20 +49,24 @@ export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 hokuyo_lio and sync_lio
 ```bash
 # hokuyo_lio
-cd $ROS_WORKSPACE
+cd ~/catkin_ws/src
 git clone https://github.com/Hokuyo-RD/hokuyo_lio.git
 catkin build hokuyo_lio
 
 # sync_lio_pc
-cd $ROS_WORKSPACE
+cd ~/catkin_ws/src
 git clone https://github.com/Hokuyo-RD/sync_lio_pc.git
 catkin build sync_lio_pc
 
 # hokuyo_slam
-cd $ROS_WORKSPACE
+cd ~/github
 git clone https://github.com/Hokuyo-RD/hokuyo_slam.git
 cd hokuyo_slam
-./setup.bash
+
+export CMAKE_PREFIX_PATH=/opt/vtk8
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
+export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
+
 mkdir build
 cmake -Bbuild . && cmake --build build
 ```
