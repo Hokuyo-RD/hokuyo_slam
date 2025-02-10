@@ -24,7 +24,6 @@ sudo apt-get -y install qtcreator
 sudo apt-get -y install libqt5x11extras5-dev
 
 # vtk
-# ダウンロードはすべて~/github以下にお願いします。
 mkdir ~/github
 cd ~/github
 wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz
