@@ -81,4 +81,4 @@ bash -c "./../../build/rearrange_pointcloud concat.txt $2"
 
 # 絶対座標を相対座標に変換
 cd ../..
-bash -c "python3 scripts/pcd_to_Rcord.py data/$2/${2}_Acord.pcd data/$2/${2}_Rcord.pcd"
+bash -c "python3 scripts/pcd_to_Rcord.py data/$2/${2}_Acord.pcd data/$2/${2}_Rcord.pcd data/$2/output.p2o_out.txt data/$2/init_pose.txt"

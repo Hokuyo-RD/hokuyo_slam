@@ -6,6 +6,8 @@ import os
 args = sys.argv
 input_file=os.path.normpath(os.path.join(os.getcwd(),args[1]))
 output_file=os.path.normpath(os.path.join(os.getcwd(),args[2]))
+out_p2o = os.path.normpath(os.path.join(os.getcwd(),args[3]))
+initial_pose=os.path.normpath(os.path.join(os.getcwd(),args[4]))
 
 # ファイルの読み込み先頭から1行ずつ読み込む
 with open(input_file, "r") as f:
@@ -38,6 +40,27 @@ with open(output_file, "w") as f:
     # データ部を読み込み
     for row in cx_y_z:
         f.write(" ".join(map(str, row)) + "\n")
+
+# 初期位置の取得
+# output.p2o_out.txt
+with open(out_p2o, "r") as f:
+    p2o = f.readlines()
+
+# p2o ファイルの並進移動量を格納する。
+p2ox_y_z = []
+p2ox, p2oy, p2oz, p2oq1, p2oq2, p2oq3, p2oq4 = map(float, p2o[1].split())
+p2ox_y_z.append([p2ox, p2oy, p2oz])
+
+initx_y_z = []
+initx = p2ox - ox
+inity = p2oy - oy
+initz = p2oz - oz
+initx_y_z.append([initx,inity,initz,p2oq1,p2oq2,p2oq3,p2oq4])
+
+with open(initial_pose, "w") as f:
+    for row in initx_y_z:
+        f.write(",".join(map(str, row)) + "\n")
+
 
 # 出力確認 list 10個出力
 # for i in range(0, 5):
