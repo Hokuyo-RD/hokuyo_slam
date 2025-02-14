@@ -3,12 +3,9 @@
 # export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 
 #!/bin/bash
-IFS_BACKUP=$IFS
-IFS=$'\n'
-i=0
-for L in `cat data/ATC_area_2/init_pose.txt`
+posefile="data/ATC_area_2/init_pose.txt"
+
+while IFS=, read -r init_pose1 init_pose2 init_pose3 init_pose4 init_pose5 init_pose6 init_pose7
 do
-  i=`expr $i + 1`
-  echo $L
-done
-IFS=$IFS_BACKUP
+ echo "${init_pose1} ${init_pose2} ${init_pose3} ${init_pose3} ${init_pose4} ${init_pose5} ${init_pose6} ${init_pose7}"
+done < ${posefile}

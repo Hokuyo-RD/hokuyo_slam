@@ -70,6 +70,20 @@ mkdir build
 cmake -Bbuild . && cmake --build build
 ```
 
+python extract
+```
+sudo apt-get install python3-pip
+pip3 install tqdm
+pip3 install open3d
+
+```
+環境変数の設定
+```
+# ~/.bashrc に一行追記
+export ROS_WORKSPACE=$HOME/catkin_ws
+# or export ROS_WORKSPACE=$HOME/<your_workingspace>
+```
+
 ## Usage
 
 1. locate bag file under the rosbag/
