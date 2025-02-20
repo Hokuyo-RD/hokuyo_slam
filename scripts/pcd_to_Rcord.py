@@ -11,7 +11,11 @@ initial_pose=os.path.normpath(os.path.join(os.getcwd(),args[4]))
 
 # ファイルの読み込み先頭から1行ずつ読み込む
 with open(input_file, "r") as f:
-    lines = f.readlines()
+    try:
+        lines = f.readlines()
+    except FileNotFoundError as err:
+        print(err)
+        print('点群のトピック名が間違っています。')
 
 # 原点を配列に導入する。
 ox_y_z = []
@@ -44,7 +48,11 @@ with open(output_file, "w") as f:
 # 初期位置の取得
 # output.p2o_out.txt
 with open(out_p2o, "r") as f:
-    p2o = f.readlines()
+    try:
+        p2o = f.readlines()
+    except FileNotFoundError as err:
+        print(err)
+        print('file not found.')
 
 # p2o ファイルの並進移動量を格納する。
 p2ox_y_z = []

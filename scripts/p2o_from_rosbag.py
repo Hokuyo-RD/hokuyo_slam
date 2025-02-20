@@ -9,13 +9,13 @@ import os
 from tqdm import tqdm
 import kgeom3d
 from pyproj import Transformer
+import sys
 
 # parameters
 
 # information matrix (upper triangle) for odometry observations
 odom_infom = '1e2 0 0 0 0 0 1e2 0 0 0 0 1e2 0 0 0 1e2 0 0 1e2 0 1e2'
-gnss_cov_thre = 0.01
-
+#gnss_cov_thre = 0.0001
 
 def latlon_to_xyz(trans, lat, lon, alt):
     x, y = trans.transform(lat, lon)
@@ -25,6 +25,7 @@ def latlon_to_xyz(trans, lat, lon, alt):
 args = sys.argv
 assert len(args)>=2, "you must specify a rosbag file"
 
+gnss_cov_thre = float(args[4])
 # get path
 filename=os.path.normpath(os.path.join(os.getcwd(),args[1]))
 lio_topic_name=os.path.normpath(os.path.join(os.getcwd(),args[2]))
