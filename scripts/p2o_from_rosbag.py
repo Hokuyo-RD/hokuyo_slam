@@ -42,6 +42,7 @@ vertices=[]
 edges=[]
 np_poses=None
 np_gnss_list=None
+np_lla_list=None
 id = 0
 for topic, msg, t in bag.read_messages():
     t_since_epoch = t.secs + t.nsecs * 1e-9
@@ -71,6 +72,7 @@ for topic, msg, t in bag.read_messages():
             if msg.position_covariance[0] < gnss_cov_thre and (t_since_epoch - prev_gnss_t > 3):
                 #print(f'gnss status: {msg.status.status}', file=sys.stderr)
                 x, y, z = latlon_to_xyz(transformer, msg.latitude, msg.longitude, msg.altitude)
+                lat,lon,alt = msg.latitude, msg.longitude, msg.altitude
                 np_gnss=np.zeros((1,8), dtype=np.float64)
                 np_gnss[0,0]=t_since_epoch
                 np_gnss[0,1]=id
@@ -80,16 +82,31 @@ for topic, msg, t in bag.read_messages():
                 np_gnss[0,5]=msg.position_covariance[0]
                 np_gnss[0,6]=msg.position_covariance[4]
                 np_gnss[0,7]=msg.position_covariance[8]
+
+                np_lla=np.zeros((1,8), dtype=np.float64)
+                np_lla[0,0]=t_since_epoch
+                np_lla[0,1]=id
+                np_lla[0,2]=lat
+                np_lla[0,3]=lon
+                np_lla[0,4]=alt
+                np_lla[0,5]=msg.position_covariance[0]
+                np_lla[0,6]=msg.position_covariance[4]
+                np_lla[0,7]=msg.position_covariance[8]
                 if np_gnss_list is None:
                     np_gnss_list = np_gnss
                 else:
                     np_gnss_list=np.append(np_gnss_list,np_gnss,axis=0)
+                if np_lla_list is None:
+                    np_lla_list = np_lla
+                else:
+                    np_lla_list=np.append(np_lla_list,np_lla,axis=0)
                 prev_gnss_t = t_since_epoch
 
 bag.close()
 
 
 mean_gnss = np.mean(np_gnss_list, axis=0)
+#mean_lla = np.mean(np_lla_list, axis=0)
 #print(mean_gnss, file=sys.stderr)
 
 vertices.insert(0, f'VERTEX_SE3:QUAT 0 {mean_gnss[3]} {mean_gnss[2]} {mean_gnss[4]} 0 0 0 1')
@@ -111,6 +128,14 @@ for i in range(len(np_gnss_list)):
     gnss_infom = f'{xinfo} 0 0 {yinfo} 0 {zinfo}'
 
     edges.append(f'EDGE_LIN3D 0 {id} {y} {x} {z} {gnss_infom}')
+
+for i in range(len(np_lla_list)):
+    id = int(np_lla_list[i,1])
+    lat = np_lla_list[i,2]
+    lon = np_lla_list[i,3]
+    alt = np_lla_list[i,4]
+
+    edges.append(f'EDGE_LLA 0 {id} {lat} {lon} {alt}')
 
 for v in vertices:
     print(v)

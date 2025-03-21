@@ -3,3 +3,4 @@ data/
 /build/
 *.bag
 scripts/__pycache__/
+*.code-workspace

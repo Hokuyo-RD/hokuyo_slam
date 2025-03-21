@@ -8,6 +8,7 @@ input_file=os.path.normpath(os.path.join(os.getcwd(),args[1]))
 output_file=os.path.normpath(os.path.join(os.getcwd(),args[2]))
 out_p2o = os.path.normpath(os.path.join(os.getcwd(),args[3]))
 initial_pose=os.path.normpath(os.path.join(os.getcwd(),args[4]))
+initial_lat_lon_alt=os.path.normpath(os.path.join(os.getcwd(),args[5]))
 
 # ファイルの読み込み先頭から1行ずつ読み込む
 with open(input_file, "r") as f:
@@ -56,7 +57,8 @@ with open(out_p2o, "r") as f:
 
 # p2o ファイルの並進移動量を格納する。
 p2ox_y_z = []
-p2ox, p2oy, p2oz, p2oq1, p2oq2, p2oq3, p2oq4 = map(float, p2o[1].split())
+p2ox_dummy, p2oy_dummy, p2oz_dummy, p2oq1_dummy, p2oq2_dummy, p2oq3_dummy, p2oq4_dummy, lat, lon, alt = map(float, p2o[0].split())
+p2ox, p2oy, p2oz, p2oq1, p2oq2, p2oq3, p2oq4, lat_dummy, lon_dummy, alt_dummy = map(float, p2o[1].split())
 p2ox_y_z.append([p2ox, p2oy, p2oz])
 
 initx_y_z = []
@@ -65,10 +67,16 @@ inity = p2oy - oy
 initz = p2oz - oz
 initx_y_z.append([initx,inity,initz,p2oq1,p2oq2,p2oq3,p2oq4])
 
+init_lat_lon_alt = []
+init_lat_lon_alt.append([lat,lon,alt])
+
 with open(initial_pose, "w") as f:
     for row in initx_y_z:
         f.write(",".join(map(str, row)) + "\n")
 
+with open(initial_lat_lon_alt,"w") as f:
+    for row in init_lat_lon_alt:
+        f.write(",".join(map(str, row)) + "\n")
 
 # 出力確認 list 10個出力
 # for i in range(0, 5):

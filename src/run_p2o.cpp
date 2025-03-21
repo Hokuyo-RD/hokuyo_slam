@@ -14,15 +14,16 @@
 #include <getopt.h>
 #include <p2o.h>
 
-bool loadP2OFile( const char *p2ofile, p2o::Pose3DVec &nodes, std::vector<p2o::ErrorFunc3D*> &errorfuncs)
+bool loadP2OFile( const char *p2ofile, p2o::Pose3DVec &nodes, std::vector<p2o::ErrorFunc3D*> &errorfuncs, std::vector<std::tuple<double, double, double>> &lla_data)
 {
     using namespace p2o;
     std::ifstream is(p2ofile);
     if (!is) return false;
 
     nodes.clear();
+    lla_data.clear();
     int id;
-    double x, y, z, qx, qy, qz, qw;
+    double x, y, z, qx, qy, qz, qw, lat, lon, alt;
     while(is){
         char buf[1024];
         is.getline(buf,1024);
@@ -70,6 +71,10 @@ bool loadP2OFile( const char *p2ofile, p2o::Pose3DVec &nodes, std::vector<p2o::E
             err->idb = id2;
             err->relpos << x , y , z;
             errorfuncs.push_back(err);
+        } else if (tag=="EDGE_LLA"){
+            int id1, id2;
+            sstrm >> id1 >> id2 >> lat >> lon >> alt;
+            lla_data.emplace_back(lat, lon, alt);
         }
     }
     return true;
@@ -85,7 +90,8 @@ void sample_g2o_3d(const std::string &filename, int max_iter, int min_iter, doub
     p2o::Optimizer3D optimizer;
     optimizer.setVerbose(true);
     std::vector<p2o::ErrorFunc3D*> error_funcs;
-    if (!loadP2OFile(filename.c_str(), nodes, error_funcs)) {
+    std::vector<std::tuple<double, double, double>> lla_data;
+    if (!loadP2OFile(filename.c_str(), nodes, error_funcs, lla_data)) {
         std::cout << "can't open file: " << filename << std::endl;
         return;
     }
@@ -102,8 +108,10 @@ void sample_g2o_3d(const std::string &filename, int max_iter, int min_iter, doub
         Eigen::Quaterniond q2 = result[i].rv.toQuaternion();
         ofs << nodes[i].x << " " << nodes[i].y << " " << nodes[i].z << " "
             << q1.x() << " " << q1.y() << " " << q1.z() << " " << q1.w() << std::endl;
+        auto& [lat, lon, alt] = lla_data[i];
         ofs2 << result[i].x << " " << result[i].y << " " << result[i].z << " "
-            << q2.x() << " " << q2.y() << " " << q2.z() << " " << q2.w() << std::endl;
+             << q2.x() << " " << q2.y() << " " << q2.z() << " " << q2.w() << " "
+             << lat << " " << lon << " " << alt << std::endl;
     }
     for (auto &err : error_funcs) {
         delete err;

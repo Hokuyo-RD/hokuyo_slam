@@ -118,7 +118,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
 
     # 絶対座標を相対座標に変換
     cd ../..
-    bash -c "python3 scripts/pcd_to_Rcord.py data/$2/${2}_Acord.pcd data/$2/${2}_Rcord.pcd data/$2/output.p2o_out.txt data/$2/init_pose.txt"
+    bash -c "python3 scripts/pcd_to_Rcord.py data/$2/${2}_Acord.pcd data/$2/${2}_Rcord.pcd data/$2/output.p2o_out.txt data/$2/init_pose.txt data/$2/init_lat_lon_alt.txt"
   elif [ ${result} -eq 1 ] ; then
     echo 'rosbag play でfixメッセージがあるかの確認と、gnss_logで共分散の値を確認してください。'
   fi
