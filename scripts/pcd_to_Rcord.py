@@ -18,10 +18,28 @@ with open(input_file, "r") as f:
         print(err)
         print('点群のトピック名が間違っています。')
 
+# 初期位置の取得
+# output.p2o_out.txt
+with open(out_p2o, "r") as f:
+    try:
+        p2o = f.readlines()
+    except FileNotFoundError as err:
+        print(err)
+        print('file not found.')
+
+# p2o ファイルの並進移動量を格納する。
+p2ox_y_z = []
+ox, oy, oz, p2oq1_dummy, p2oq2_dummy, p2oq3_dummy, p2oq4_dummy, lat, lon, alt = map(float, p2o[10].split())
+p2ox, p2oy, p2oz, p2oq1, p2oq2, p2oq3, p2oq4, lat_dummy, lon_dummy, alt_dummy = map(float, p2o[1].split())
+p2ox_y_z.append([p2ox, p2oy, p2oz])
+
 # 原点を配列に導入する。
 ox_y_z = []
-ox, oy, oz = map(float, lines[11].split())
+# ox, oy, oz = map(float, lines[11].split())
 ox_y_z.append([ox, oy, oz])
+oxyz = []
+o_x,o_y,o_z = map(float, lines[11].split())
+oxyz.append([o_x,o_y,o_z])
 
 # 計算に用いる配列を記録する。
 x_y_z = []
@@ -33,7 +51,7 @@ for i in range(12, len(lines)):
 cx_y_z = [[] for _ in range(len(x_y_z)+1)]
 
 # リスト同士の計算 内包表記
-cx_y_z[0] = [x - y for x, y in zip(ox_y_z[0], ox_y_z[0])]
+cx_y_z[0] = [x - y for x, y in zip(oxyz[0], ox_y_z[0])]
 for i in range(0, len(x_y_z)):
     cx_y_z[i+1] = [x - y for x, y in zip(x_y_z[i], ox_y_z[0])]
 
@@ -46,20 +64,6 @@ with open(output_file, "w") as f:
     for row in cx_y_z:
         f.write(" ".join(map(str, row)) + "\n")
 
-# 初期位置の取得
-# output.p2o_out.txt
-with open(out_p2o, "r") as f:
-    try:
-        p2o = f.readlines()
-    except FileNotFoundError as err:
-        print(err)
-        print('file not found.')
-
-# p2o ファイルの並進移動量を格納する。
-p2ox_y_z = []
-p2ox_dummy, p2oy_dummy, p2oz_dummy, p2oq1_dummy, p2oq2_dummy, p2oq3_dummy, p2oq4_dummy, lat, lon, alt = map(float, p2o[0].split())
-p2ox, p2oy, p2oz, p2oq1, p2oq2, p2oq3, p2oq4, lat_dummy, lon_dummy, alt_dummy = map(float, p2o[1].split())
-p2ox_y_z.append([p2ox, p2oy, p2oz])
 
 initx_y_z = []
 initx = p2ox - ox
