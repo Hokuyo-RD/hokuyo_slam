@@ -16,6 +16,17 @@ Ubuntu 20.04 ROS1 Noetic
 This package is dependent on Eigen3, C++14, and pcl 1.14
 
 ```bash
+# Proj
+sudo apt-get install libsqlite3-dev sqlite3
+wget https://download.osgeo.org/proj/proj-9.4.1.tar.gz
+tar -zxvf proj-9.4.1.tar.gz
+cd proj-9.4.1
+mkdir build
+cd build
+cmake ..
+cmake --build .
+sudo cmake --build . --target install
+
 # for vtk
 sudo apt-get install libeigen3-dev
 sudo apt-get -y install qtbase5-dev
