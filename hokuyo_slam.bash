@@ -6,6 +6,10 @@
 # ディレクトリは data/に作られる。
 # rosbag 下に配置したrosbag はスクリプト実行時にdata/データ名/に移動する。
 
+export CMAKE_PREFIX_PATH=/opt/vtk8
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
+export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
+
 if [ -z "$1" ]; then
   echo "Error: 引数が不足しています <フォルダ名>"
   exit 1
