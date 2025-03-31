@@ -63,5 +63,5 @@ if [ "x${run_lio}" = "xtrue" ]; then
  gnome-terminal --tab -t "hokuyo_lio" -- bash -c "roslaunch hokuyo_lio hokuyo_lio_node_with_yaml.launch; bash"
 fi
 gnome-terminal --tab -t "rosbag play" -- bash -c "cd ${rosbag_dir}; rosbag play $1; bash"
-# gnome-terminal --tab -t "sync_lio_pc" -- bash -c "echo sync_lio_pc working!!; rosrun sync_lio_pc sync_lio_pc _point_topic:=${pointcloud_topic}; bash" # rosrun を落としてもroscoreが起動しているとrosrun でパラメータを変更しても残る。
+gnome-terminal --tab -t "sync_lio_pc" -- bash -c "echo sync_lio_pc working!!; rosrun sync_lio_pc sync_lio_pc _point_topic:=${pointcloud_topic}; bash" # rosrun を落としてもroscoreが起動しているとrosrun でパラメータを変更しても残る。
 gnome-terminal --tab -t "rosbag record" -- bash -c "cd ${rosbag_dir}; echo timeout $((`rosbag info ${rosbag_dir}/$1 | grep -i "duration" | awk '{ print $3 }' | sed -e 's/[^0-9]//g'`)) rosbag record -O $2 $gnss_topic $pointcloud_topic $lio_topic; timeout $((`rosbag info ${rosbag_dir}/$1 | grep -i "duration" | awk '{ print $3 }' | sed -e 's/[^0-9]//g'`-10)) rosbag record -O $2 $gnss_topic $pointcloud_topic $lio_topic; bash"
