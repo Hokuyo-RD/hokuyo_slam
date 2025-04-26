@@ -20,7 +20,7 @@ topic_name=args[3]
 thre=float(args[4])
 
 def find_db_file(bag_folder):
-    """指定されたフォルダ内の最初の .db3 ファイルを検索します。"""
+    """指定されたフォルダ内の最初の .db3 ファイルを検索"""
     db_files = glob.glob(os.path.join(bag_folder, '*.db3'))
     if db_files:
         return db_files[0]
