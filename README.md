@@ -4,6 +4,15 @@
 補正した軌跡に沿って、YVTの3Dスキャン点群を並べて、
 緯度・軽度による絶対座標の情報を付与した3D点群地図を作成します。
 
+# ros2 対応
+04/27 p2o_gnsslog_from_rosbag_ros2.py, p2o_from_rosbag_ros2.py, extract_pcd_ros2.py, pcd_to_Rcord.py
+sqlite3 形式の ROS2のROSBAG への対応完了。
+
+## dependency
+```
+pip3 install numpy==1.24.4 (version >=1.17.3 <1.25.0)
+```
+
 ## 使用したパッケージ
 - p2o: https://github.com/furo-org/p2o
 - p2o_fastlio_util: https://github.com/kiyoshiiriemon/p2o_fastlio_util

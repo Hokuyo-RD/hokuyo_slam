@@ -1,86 +1,84 @@
 # -- coding: utf-8 --
 import sys
 import os
+import numpy as np
 
-# コマンドライン引数 引数1：入力ファイル(path) 引数2：出力ファイル名(path)
+# コマンドライン引数 引数1：入力ファイル(path) 引数2：出力ファイル名(path) 引数3：p2o出力ファイル(path) 引数4：初期ポーズ出力ファイル(path) 引数5：初期緯度経度高度出力ファイル(path)
 args = sys.argv
-input_file=os.path.normpath(os.path.join(os.getcwd(),args[1]))
-output_file=os.path.normpath(os.path.join(os.getcwd(),args[2]))
-out_p2o = os.path.normpath(os.path.join(os.getcwd(),args[3]))
-initial_pose=os.path.normpath(os.path.join(os.getcwd(),args[4]))
-initial_lat_lon_alt=os.path.normpath(os.path.join(os.getcwd(),args[5]))
+input_file = os.path.normpath(os.path.join(os.getcwd(), args[1]))
+output_file = os.path.normpath(os.path.join(os.getcwd(), args[2]))
+out_p2o = os.path.normpath(os.path.join(os.getcwd(), args[3]))
+initial_pose = os.path.normpath(os.path.join(os.getcwd(), args[4]))
+initial_lat_lon_alt = os.path.normpath(os.path.join(os.getcwd(), args[5]))
 
-# ファイルの読み込み先頭から1行ずつ読み込む
-with open(input_file, "r") as f:
-    try:
-        lines = f.readlines()
-    except FileNotFoundError as err:
-        print(err)
-        print('点群のトピック名が間違っています。')
+try:
+    # ファイルの読み込み、先頭から11行目までを文字列として保持
+    with open(input_file, "r") as f:
+        header_lines = [next(f) for _ in range(11)]
+        # 原点の読み込みと NumPy 配列への変換
+        origin = np.array(list(map(float, next(f).split())))
+        # 残りのデータを NumPy 配列として一括読み込み
+        data = np.loadtxt(f)
+except FileNotFoundError as err:
+    print(err)
+    print('入力ファイルが見つかりません。')
+    sys.exit(1)
+except ValueError as err:
+    print(err)
+    print('入力ファイルの数値形式が不正です。')
+    sys.exit(1)
 
-# 原点を配列に導入する。
-ox_y_z = []
-ox, oy, oz = map(float, lines[11].split())
-ox_y_z.append([ox, oy, oz])
+print("点群の平行移動を開始します。")
 
-# 計算に用いる配列を記録する。
-x_y_z = []
-for i in range(12, len(lines)):
-    x,y,z = map(float, lines[i].split())
-    x_y_z.append([x,y,z])
+# 座標の計算
+calculated_data = data - origin
 
-# 座標の計算結果を格納する配列を確保 x_y_z + 1(原点)と同じ長さの配列
-cx_y_z = [[] for _ in range(len(x_y_z)+1)]
+print("点群の平行移動を終了しました。")
 
-# リスト同士の計算 内包表記
-cx_y_z[0] = [x - y for x, y in zip(ox_y_z[0], ox_y_z[0])]
-for i in range(0, len(x_y_z)):
-    cx_y_z[i+1] = [x - y for x, y in zip(x_y_z[i], ox_y_z[0])]
-
-# ファイル出力
+# 結果をファイル出力
 with open(output_file, "w") as f:
-    # 文字列部
-    for i in range(0,11):
-        f.writelines(lines[i])
-    # データ部を読み込み
-    for row in cx_y_z:
-        f.write(" ".join(map(str, row)) + "\n")
+    # 文字列部を書き込み
+    f.writelines(header_lines)
+    # データ部を NumPy 配列から文字列に変換して一括書き込み
+    np.savetxt(f, calculated_data, fmt='%f')
 
-# 初期位置の取得
-# output.p2o_out.txt
-with open(out_p2o, "r") as f:
-    try:
-        p2o = f.readlines()
-    except FileNotFoundError as err:
-        print(err)
-        print('file not found.')
+try:
+    # p2o ファイルの読み込み
+    with open(out_p2o, "r") as f:
+        p2o_lines = f.readlines()
+        p2o_data = np.array([list(map(float, line.split())) for line in p2o_lines])
+        p2o_origin = p2o_data[1, :3]  # p2o の原点 (2行目の最初の3要素)
+        initial_lat_lon_alt_data = p2o_data[0, 7:] # p2o の初期緯度経度高度 (1行目の後半3要素)
+        initial_quat = p2o_data[1, 3:7] # p2o の初期クォータニオン (2行目の4-7要素)
 
-# p2o ファイルの並進移動量を格納する。
-p2ox_y_z = []
-p2ox_dummy, p2oy_dummy, p2oz_dummy, p2oq1_dummy, p2oq2_dummy, p2oq3_dummy, p2oq4_dummy, lat, lon, alt = map(float, p2o[0].split())
-p2ox, p2oy, p2oz, p2oq1, p2oq2, p2oq3, p2oq4, lat_dummy, lon_dummy, alt_dummy = map(float, p2o[1].split())
-p2ox_y_z.append([p2ox, p2oy, p2oz])
+except FileNotFoundError as err:
+    print(err)
+    print('p2o ファイルが見つかりません。')
+    sys.exit(1)
+except ValueError as err:
+    print(err)
+    print('p2o ファイルの数値形式が不正です。')
+    sys.exit(1)
+except IndexError as err:
+    print(err)
+    print('p2o ファイルの形式が想定外です。')
+    sys.exit(1)
 
-initx_y_z = []
-initx = p2ox - ox
-inity = p2oy - oy
-initz = p2oz - oz
-initx_y_z.append([initx,inity,initz,p2oq1,p2oq2,p2oq3,p2oq4])
-
-init_lat_lon_alt = []
-init_lat_lon_alt.append([lat,lon,alt])
-
+# 初期位置の計算とファイル出力
+initial_translation = p2o_origin - origin
+initial_pose_data = np.concatenate([initial_translation, initial_quat])
 with open(initial_pose, "w") as f:
-    for row in initx_y_z:
-        f.write(",".join(map(str, row)) + "\n")
+    f.write(",".join(map(str, initial_pose_data)) + "\n")
 
-with open(initial_lat_lon_alt,"w") as f:
-    for row in init_lat_lon_alt:
-        f.write(",".join(map(str, row)) + "\n")
+with open(initial_lat_lon_alt, "w") as f:
+    f.write(",".join(map(str, initial_lat_lon_alt_data)) + "\n")
 
-# 出力確認 list 10個出力
-# for i in range(0, 5):
-#     print(x_y_z[i-1])
-#     print(ox_y_z[0])
-#     print(cx_y_z[i])
-# print(len(cx_y_z))
+# 出力確認 (最初の5行)
+# if len(data) > 0:
+#     print("Original Point (first 1):")
+#     print(data[0])
+#     print("Origin:")
+#     print(origin)
+#     print("Calculated Point (first 1):")
+#     print(calculated_data[0])
+# print(f"Number of calculated points: {len(calculated_data)}")

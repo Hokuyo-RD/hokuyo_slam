@@ -6,18 +6,16 @@ from rclpy.serialization import deserialize_message
 import sys
 import os
 import csv
-import math
 import numpy as np
 import glob
 
 args = sys.argv
 
 # get path
-bag_folder=os.path.normpath(os.path.join(os.getcwd(),args[1]))
-output_csv=os.path.normpath(os.path.join(os.getcwd(),args[2]))
-topic_name=args[3]
-#topic_name = '/fix'
-thre=float(args[4])
+bag_folder = os.path.normpath(os.path.join(os.getcwd(), args[1]))
+output_csv = os.path.normpath(os.path.join(os.getcwd(), args[2]))
+topic_name = args[3]
+thre = float(args[4])
 
 def find_db_file(bag_folder):
     """指定されたフォルダ内の最初の .db3 ファイルを検索"""
@@ -100,42 +98,28 @@ if __name__ == "__main__":
     msg_type = get_message(msg_type_str)
 
     timestamps, msgs_data = getAllMessagesInTopic(c, topic_name)
+    num_messages = len(msgs_data)
 
-    north_fixes = []
-    east_fixes = []
-    vertical_fixes = []
-    north_variances = []
-    east_variances = []
-    vertical_variances = []
+    # NumPy 配列を事前に確保
+    covariances = np.empty((num_messages, 9))
 
-    for msg_data in msgs_data:
+    for i, msg_data in enumerate(msgs_data):
         deserialized_msg = deserialize_message(msg_data, msg_type)
+        covariances[i] = deserialized_msg.position_covariance
 
-        covariance = deserialized_msg.position_covariance
+    # NumPy の機能を使って fix 率を計算
+    north_fixed = covariances[:, 0] <= thre
+    east_fixed = covariances[:, 4] <= thre
+    vertical_fixed = covariances[:, 8] <= thre
 
-        # Fix rate calculation based on covariance values
-        north_fixed = covariance[0] <= thre
-        east_fixed = covariance[4] <= thre
-        vertical_fixed = covariance[8] <= thre
+    avg_north_fix_rate = np.mean(north_fixed) * 100 if north_fixed.size > 0 else 0
+    avg_east_fix_rate = np.mean(east_fixed) * 100 if east_fixed.size > 0 else 0
+    avg_vertical_fix_rate = np.mean(vertical_fixed) * 100 if vertical_fixed.size > 0 else 0
 
-        north_fixes.append(1 if north_fixed else 0)
-        east_fixes.append(1 if east_fixed else 0)
-        vertical_fixes.append(1 if vertical_fixed else 0)
-
-        # Extract variances (covariance values)
-        north_variances.append(covariance[0])
-        east_variances.append(covariance[4])
-        vertical_variances.append(covariance[8])
-
-    # Calculate average fix rates
-    avg_north_fix_rate = np.mean(north_fixes) * 100 if north_fixes else 0
-    avg_east_fix_rate = np.mean(east_fixes) * 100 if east_fixes else 0
-    avg_vertical_fix_rate = np.mean(vertical_fixes) * 100 if vertical_fixes else 0
-
-    # Calculate average variances
-    avg_north_variance = np.mean(north_variances) if north_variances else 0
-    avg_east_variance = np.mean(east_variances) if east_variances else 0
-    avg_vertical_variance = np.mean(vertical_variances) if vertical_variances else 0
+    # NumPy の機能を使ってばらつきの平均を計算
+    avg_north_variance = np.mean(covariances[:, 0]) if covariances.size > 0 else 0
+    avg_east_variance = np.mean(covariances[:, 4]) if covariances.size > 0 else 0
+    avg_vertical_variance = np.mean(covariances[:, 8]) if covariances.size > 0 else 0
 
     with open(output_csv, 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
@@ -150,7 +134,7 @@ if __name__ == "__main__":
 
         # Write individual variances
         csv_writer.writerow(['北方向のばらつき[m]', '東方向のばらつき[m]', '鉛直方向のばらつき[m]'])
-        for n_var, e_var, v_var in zip(north_variances, east_variances, vertical_variances):
+        for n_var, e_var, v_var in covariances[:, [0, 4, 8]]:
             csv_writer.writerow([f'{n_var:.10f}', f'{e_var:.10f}', f'{v_var:.10f}'])
 
     close(conn)
