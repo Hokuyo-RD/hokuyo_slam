@@ -17,13 +17,17 @@ if [ -z "$2" ]; then
   exit 1
 fi
 
+# チェックするパス
+PATH_TO_CHECK="rosbag/$1"
+
 # ファイルが存在するかチェック
-FILE=rosbag/$1
-if [ ! -f "$FILE" ]; then
-  echo "Error: File $FILE does not exist."
-  exit 1
+if [ -f "$PATH_TO_CHECK" ]; then
+  echo "rosbag file: $PATH_TO_CHECK exists."
+elif [ -d "$PATH_TO_CHECK" ]; then
+  echo "rosbag folder: $PATH_TO_CHECK exists."
 else
-  echo "rosbag file: $FILE exists."
+  echo "Error: Path $PATH_TO_CHECK does not exist (neither file nor folder)."
+  exit 1
 fi
 
 #------- カレントディレクトリの取得 -------
@@ -70,8 +74,10 @@ mkdir -p data/$2/PCDs
 # rosbag 移動
 mv rosbag/$1 data/$2
 
+sleep 1
+
 # gnssのログを確認する。
-bash -c "python3 scripts/p2o_gnsslog_from_rosbag.py data/$2/$1 gnss_log/${2}_gnss_cov_${gnss_cov_thre}.csv $gnss_cov_thre"
+bash -c "python3 scripts/p2o_gnsslog_from_rosbag_ros2.py data/$2/$1 gnss_log/${2}_gnss_cov_${gnss_cov_thre}.csv $gnss_topic $gnss_cov_thre"
 gnss_opt=(`cat gnss_log/${2}_gnss_cov_${gnss_cov_thre}.csv`)
 
 sleep 1
@@ -94,7 +100,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
 
   sleep 1
   # p2o　正常終了の場合のみ処理を実行したい。
-  bash -c "python3 scripts/p2o_from_rosbag.py data/$2/$1 $lio_topic $gnss_topic $gnss_cov_thre > data/$2/output.p2o" # 引数2 input.bag
+  bash -c "python3 scripts/p2o_from_rosbag_ros2.py data/$2/$1 $lio_topic $gnss_topic $gnss_cov_thre > data/$2/output.p2o" # 引数2 input.bag
   result=$?
 
   echo 'error status:' ${result}
@@ -106,7 +112,7 @@ elif [ ${fix_rate} -eq 1 ] ; then
     # p2o_fastlio_util
     cd data/$2/PCDs 
 
-    bash -c "python3 ../../../scripts/extract_pcd.py ../$1 $pointcloud_topic" # ~/p2o_fastlio_util/extract_pcd 引数1 + 引数2
+    bash -c "python3 ../../../scripts/extract_pcd_ros2.py ../$1 $pointcloud_topic" # ~/p2o_fastlio_util/extract_pcd 引数1 + 引数2
 
     # p2o_fastlio_util におけるファイル整理
     cd ./..
