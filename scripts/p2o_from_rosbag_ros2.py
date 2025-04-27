@@ -9,6 +9,7 @@ import numpy as np
 import glob
 import kgeom3d
 from pyproj import Transformer
+from rosbag2_py import SequentialReader, StorageFilter, ConverterOptions, StorageOptions
 
 # parameters
 odom_infom = '1e2 0 0 0 0 0 1e2 0 0 0 0 1e2 0 0 0 1e2 0 0 1e2 0 1e2'
@@ -18,6 +19,73 @@ def find_db_file(bag_folder):
     if db_files:
         return db_files[0]
     else:
+        return None
+
+def read_all_messages_mcap(bag_path, topic_name):
+    """指定された mcap ファイルから特定トピックのメッセージを読み込む"""
+    reader = SequentialReader()
+    try:
+        storage_options = StorageOptions(uri=bag_path, storage_id='mcap')
+        converter_options = ConverterOptions()
+        reader.open(storage_options, converter_options)
+    except Exception as e:
+        print(f"Error opening bag file '{bag_path}': {e}")
+        return [], None, None
+
+    topic_types = reader.get_all_topics_and_types()
+    target_type = None
+    for topic_info in topic_types:
+        if topic_info.name == topic_name:
+            target_type = topic_info.type
+            break
+
+    if target_type is None:
+        print(f"Topic '{topic_name}' not found in bag file.")
+        return [], None, None
+
+    storage_filter = StorageFilter()
+    storage_filter.topics = [topic_name]
+    reader.set_filter(storage_filter)
+
+    timestamps = []
+    messages = []
+    while reader.has_next():
+        try:
+            (topic, data, t) = reader.read_next()
+            if topic == topic_name:
+                msg_type = get_message_mcap(target_type)
+                if msg_type:
+                    deserialized_msg = deserialize_message(data, msg_type)
+                    timestamps.append(t)
+                    messages.append(deserialized_msg)
+                else:
+                    print(f"Error: Could not get message type '{target_type}' for mcap.")
+        except Exception as e:
+            print(f"Error reading message: {e}")
+
+    del reader
+    return timestamps, messages, target_type
+
+def get_message_mcap(type_name):
+    """ROS メッセージの型名からメッセージクラスを取得する (mcap 用)"""
+    try:
+        # '/' を '.' に置換して直接インポートを試みる
+        module_path = type_name.replace('/', '.')
+        parts = module_path.split('.')
+        if len(parts) >= 2:
+            package_name = parts[0]
+            message_name = parts[-1]
+            module_name = '.'.join(parts[:-1])
+            module = __import__(module_name, fromlist=[message_name])
+            return getattr(module, message_name)
+        else:
+            print(f"Error: Invalid message type name '{type_name}'.")
+            return None
+    except ImportError as e:
+        print(f"Error: Could not import message type '{type_name}': {e}")
+        return None
+    except AttributeError:
+        print(f"Error: Could not find message class in module for '{type_name}'.")
         return None
 
 def connect(sqlite_file):
@@ -91,25 +159,47 @@ if __name__ == "__main__":
     gnss_topic_name = args[3]
     gnss_cov_thre = float(args[4])
 
+    mcap_files = glob.glob(os.path.join(bag_folder, '*.mcap'))
     db_file = find_db_file(bag_folder)
-    if not db_file:
-        print(f"Error: No .db3 file found in '{bag_folder}'.")
-        exit()
 
-    conn, c = connect(db_file)
+    lio_timestamps = []
+    lio_msgs = []
+    lio_msg_type_str = None
+    gnss_timestamps = []
+    gnss_msgs = []
+    gnss_msg_type_str = None
 
-    lio_msg_type_str = getMsgType(c, lio_topic_name)
-    gnss_msg_type_str = getMsgType(c, gnss_topic_name)
+    if mcap_files:
+        bag_file = mcap_files[0]
+        #print(f"Processing ROS 2 bag file: {bag_file}")
+        lio_timestamps, lio_msgs, lio_msg_type_str = read_all_messages_mcap(bag_file, lio_topic_name)
+        gnss_timestamps, gnss_msgs, gnss_msg_type_str = read_all_messages_mcap(bag_file, gnss_topic_name)
+        get_message_func = get_message_mcap
+    elif db_file:
+        #print(f"Processing ROS 1 bag file: {db_file}")
+        conn, c = connect(db_file)
+        lio_msg_type_str = getMsgType(c, lio_topic_name)
+        gnss_msg_type_str = getMsgType(c, gnss_topic_name)
 
-    if not lio_msg_type_str or not gnss_msg_type_str:
+        if not lio_msg_type_str or not gnss_msg_type_str:
+            close(conn)
+            exit()
+
+        lio_timestamps, lio_msgs_data = getAllMessagesInTopic(c, lio_topic_name)
+        gnss_timestamps, gnss_msgs_data = getAllMessagesInTopic(c, gnss_topic_name)
+
+        lio_msgs = [deserialize_message(msg, get_message(lio_msg_type_str)) for msg in lio_msgs_data]
+        gnss_msgs = [deserialize_message(msg, get_message(gnss_msg_type_str)) for msg in gnss_msgs_data]
+
         close(conn)
+        get_message_func = get_message
+    else:
+        print(f"Error: No .mcap or .db3 files found in '{bag_folder}'.")
         exit()
 
-    lio_timestamps, lio_msgs_data = getAllMessagesInTopic(c, lio_topic_name)
-    gnss_timestamps, gnss_msgs_data = getAllMessagesInTopic(c, gnss_topic_name)
-
-    lio_msg_type = get_message(lio_msg_type_str)
-    gnss_msg_type = get_message(gnss_msg_type_str)
+    if not lio_msgs or not gnss_msgs:
+        print("Error: Could not retrieve LIO or GNSS messages.")
+        exit()
 
     num_lio = len(lio_timestamps)
     vertices = [None] * (num_lio + 1)  # Pre-allocate list for vertices
@@ -122,9 +212,8 @@ if __name__ == "__main__":
 
     # Process LIO data
     for i in range(num_lio):
-        timestamp = lio_timestamps[i] * 1e-9
-        deserialized_msg = deserialize_message(lio_msgs_data[i], lio_msg_type)
-        pose = deserialized_msg.pose.pose
+        timestamp = lio_timestamps[i] * 1e-9 if mcap_files else lio_timestamps[i] * 1e-9
+        pose = lio_msgs[i].pose.pose
 
         id_counter += 1
         np_poses_list[i] = np.array([timestamp,
@@ -145,10 +234,16 @@ if __name__ == "__main__":
 
     # Process GNSS data
     valid_gnss_data = []
-    for timestamp, msg_data in zip(gnss_timestamps, gnss_msgs_data):
-        deserialized_msg = deserialize_message(msg_data, gnss_msg_type)
-        if (deserialized_msg.status.status == 0 or deserialized_msg.status.status == 2) and deserialized_msg.position_covariance[0] < gnss_cov_thre:
-            valid_gnss_data.append((timestamp * 1e-9, deserialized_msg))
+    for i, timestamp in enumerate(gnss_timestamps):
+        msg = gnss_msgs[i]
+        if hasattr(msg, 'status') and hasattr(msg.status, 'status') and \
+           (msg.status.status == 0 or msg.status.status == 2) and \
+           hasattr(msg, 'position_covariance') and len(msg.position_covariance) >= 9 and \
+           msg.position_covariance[0] < gnss_cov_thre:
+            valid_gnss_data.append((timestamp * 1e-9 if mcap_files else timestamp * 1e-9, msg))
+        elif not hasattr(msg, 'status') and hasattr(msg, 'position_covariance') and len(msg.position_covariance) >= 9 and msg.position_covariance[0] < gnss_cov_thre:
+            # ROS 1 の場合 status がないことがあるため、covariance のみで判定
+            valid_gnss_data.append((timestamp * 1e-9 if mcap_files else timestamp * 1e-9, msg))
 
     mean_gnss = np.zeros(3)
     if valid_gnss_data:
@@ -179,8 +274,6 @@ if __name__ == "__main__":
             if closest_lio_id > 0 and closest_lio_id <= id_counter:
                 edges.append(f'EDGE_LIN3D 0 {closest_lio_id} {y} {x} {z} {gnss_infom}')
                 edges.append(f'EDGE_LLA 0 {closest_lio_id} {msg.latitude} {msg.longitude} {msg.altitude}')
-
-    close(conn)
 
     for v in vertices:
         if v is not None:

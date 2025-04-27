@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #------- 環境変数の確認 -------
-echo ros workspace: ${ROS_WORKSPACE:?ROS_WORKSPACE is Undefined}
+# ros1 echo ros workspace: ${ROS_WORKSPACE:?ROS_WORKSPACE is Undefined}
 
 #------- 引数の確認 -------
 # 第1引数
@@ -55,13 +55,13 @@ run_lio="${option_arr[3]}";
 sleep 3
 
 source /opt/ros/$ROS_DISTRO/setup.bash
-source $ROS_WORKSPACE/devel/setup.bash
+source $HOME/colcon_ws/install/setup.bash
 
 gnome-terminal --tab -t "Tab 0" -- bash -c "roscore; bash"
 sleep 2
 if [ "x${run_lio}" = "xtrue" ]; then
- gnome-terminal --tab -t "hokuyo_lio" -- bash -c "roslaunch hokuyo_lio hokuyo_lio_node_with_yaml.launch; bash"
+ gnome-terminal --tab -t "hokuyo_lio" -- bash -c "ros2 launch hokuyo_lio hokuyo_lio_node_with_yaml.py; bash"
 fi
-gnome-terminal --tab -t "rosbag play" -- bash -c "cd ${rosbag_dir}; rosbag play $1; bash"
-gnome-terminal --tab -t "sync_lio_pc" -- bash -c "echo sync_lio_pc working!!; rosrun sync_lio_pc sync_lio_pc _point_topic:=${pointcloud_topic}; bash" # rosrun を落としてもroscoreが起動しているとrosrun でパラメータを変更しても残る。
-gnome-terminal --tab -t "rosbag record" -- bash -c "cd ${rosbag_dir}; echo timeout $((`rosbag info ${rosbag_dir}/$1 | grep -i "duration" | awk '{ print $3 }' | sed -e 's/[^0-9]//g'`)) rosbag record -O $2 $gnss_topic $pointcloud_topic $lio_topic; timeout $((`rosbag info ${rosbag_dir}/$1 | grep -i "duration" | awk '{ print $3 }' | sed -e 's/[^0-9]//g'`-10)) rosbag record -O $2 $gnss_topic $pointcloud_topic $lio_topic; bash"
+gnome-terminal --tab -t "ros2 bag play" -- bash -c "cd ${rosbag_dir}; ros2 bag play $1; bash"
+gnome-terminal --tab -t "sync_lio_pc" -- bash -c "echo sync_lio_pc working!!; ros2 run sync_lio_pc sync_lio_pc _point_topic:=${pointcloud_topic}; bash" # rosrun を落としてもroscoreが起動しているとrosrun でパラメータを変更しても残る。
+gnome-terminal --tab -t "ros2 bag record" -- bash -c "cd ${rosbag_dir}; echo timeout $((`ros2 bag info ${rosbag_dir}/$1 | grep -i "duration" | awk '{ print $3 }' | sed -e 's/[^0-9]//g'`)) ros2 bag record -O $2 $gnss_topic $pointcloud_topic $lio_topic; timeout $((`rosbag info ${rosbag_dir}/$1 | grep -i "duration" | awk '{ print $3 }' | sed -e 's/[^0-9]//g'`-10)) ros2 bag record -O $2 $gnss_topic $pointcloud_topic $lio_topic; bash"

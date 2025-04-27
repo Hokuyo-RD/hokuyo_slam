@@ -16,7 +16,12 @@ try:
     with open(input_file, "r") as f:
         header_lines = [next(f) for _ in range(11)]
         # 原点の読み込みと NumPy 配列への変換
-        origin = np.array(list(map(float, next(f).split())))
+        origin_line = next(f).split()
+        if origin_line:
+            origin = np.array(list(map(float, origin_line)))
+        else:
+            print("エラー：原点の行が空です。")
+            sys.exit(1)
         # 残りのデータを NumPy 配列として一括読み込み
         data = np.loadtxt(f)
 except FileNotFoundError as err:
@@ -27,11 +32,14 @@ except ValueError as err:
     print(err)
     print('入力ファイルの数値形式が不正です。')
     sys.exit(1)
+except StopIteration:
+    print("エラー：入力ファイルの形式が不正です。原点の行が見つかりません。")
+    sys.exit(1)
 
 print("点群の平行移動を開始します。")
 
-# 座標の計算
-calculated_data = data - origin
+# 座標の計算 (原点を含む)
+calculated_data = np.vstack([[0.0, 0.0, 0.0], data - origin])
 
 print("点群の平行移動を終了しました。")
 
@@ -46,7 +54,13 @@ try:
     # p2o ファイルの読み込み
     with open(out_p2o, "r") as f:
         p2o_lines = f.readlines()
+        if len(p2o_lines) < 2:
+            print("エラー：p2o ファイルの行数が不足しています。")
+            sys.exit(1)
         p2o_data = np.array([list(map(float, line.split())) for line in p2o_lines])
+        if p2o_data.shape[0] < 2 or p2o_data.shape[1] < 7:
+            print("エラー：p2o ファイルのデータ形式が不正です。")
+            sys.exit(1)
         p2o_origin = p2o_data[1, :3]  # p2o の原点 (2行目の最初の3要素)
         initial_lat_lon_alt_data = p2o_data[0, 7:] # p2o の初期緯度経度高度 (1行目の後半3要素)
         initial_quat = p2o_data[1, 3:7] # p2o の初期クォータニオン (2行目の4-7要素)
@@ -73,12 +87,14 @@ with open(initial_pose, "w") as f:
 with open(initial_lat_lon_alt, "w") as f:
     f.write(",".join(map(str, initial_lat_lon_alt_data)) + "\n")
 
-# 出力確認 (最初の5行)
-# if len(data) > 0:
-#     print("Original Point (first 1):")
-#     print(data[0])
-#     print("Origin:")
-#     print(origin)
-#     print("Calculated Point (first 1):")
-#     print(calculated_data[0])
-# print(f"Number of calculated points: {len(calculated_data)}")
+# デバッグ用出力 (最初の数点と形状の確認)
+if 'DEBUG' in os.environ:
+    if len(data) > 5:
+        print("Original Data (first 5):")
+        print(data[:5])
+        print("Origin:")
+        print(origin)
+        print("Calculated Data (first 5):")
+        print(calculated_data[:5])
+    print(f"Shape of Original Data: {data.shape}")
+    print(f"Shape of Calculated Data: {calculated_data.shape}")

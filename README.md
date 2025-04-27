@@ -5,12 +5,23 @@
 緯度・軽度による絶対座標の情報を付与した3D点群地図を作成します。
 
 # ros2 対応
-04/27 p2o_gnsslog_from_rosbag_ros2.py, p2o_from_rosbag_ros2.py, extract_pcd_ros2.py, pcd_to_Rcord.py
-sqlite3 形式の ROS2のROSBAG への対応完了。
+04/27 sqlite3 形式の ROS2のROSBAG への対応完了。
+p2o_gnsslog_from_rosbag_ros2.py, p2o_from_rosbag_ros2.py, extract_pcd_ros2.py, pcd_to_Rcord.py
 
+04/27 mcap 形式のROS2のROSBAG への対応対応
+04/27 mcap 形式と sqlite3 形式の両方を1つのコードで対応
+(両方のrosbagがある場合はmcapを優先する。処理が早いから)
 ## dependency
 ```
+# numpy
 pip3 install numpy==1.24.4 (version >=1.17.3 <1.25.0)
+
+# mcap
+
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# setting path
+
+brew install mcap
 ```
 
 ## 使用したパッケージ
@@ -43,18 +54,6 @@ sudo apt-get -y install clang
 sudo apt-get -y install qtcreator
 sudo apt-get -y install libqt5x11extras5-dev
 
-# vtk
-mkdir ~/github
-cd ~/github
-wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz
-tar -xvf VTK-8.2.0.tar.gz
-cd VTK-8.2.0
-cmake -DCMAKE_BUILD_TYPE=Release -DVTK_Group_Qt=ON -DCMAKE_INSTALL_PREFIX=/opt/vtk8 -Bbuild .
-cmake --build build/
-sudo cmake --install build
-export CMAKE_PREFIX_PATH=/opt/vtk8
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
-
 # pcl 1.14
 cd ~/github
 wget https://github.com/PointCloudLibrary/pcl/releases/download/pcl-1.14.1/source.tar.gz -O pcl.tar.gz
@@ -67,15 +66,17 @@ export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 ```
 hokuyo_lio and sync_lio
 ```bash
+# 04/27 時点で未対応
 # hokuyo_lio
-cd ~/catkin_ws/src
-git clone https://github.com/Hokuyo-RD/hokuyo_lio.git
-catkin build hokuyo_lio
+# cd ~/catkin_ws/src
+# git clone https://github.com/Hokuyo-RD/hokuyo_lio.git
+# catkin build hokuyo_lio
 
+# 04/27 時点で未対応
 # sync_lio_pc
-cd ~/catkin_ws/src
-git clone https://github.com/Hokuyo-RD/sync_lio_pc.git
-catkin build sync_lio_pc
+# cd ~/catkin_ws/src
+# git clone https://github.com/Hokuyo-RD/sync_lio_pc.git
+# catkin build sync_lio_pc
 
 # hokuyo_slam
 cd ~/github
@@ -97,10 +98,10 @@ pip3 install tqdm
 pip3 install open3d
 
 ```
-環境変数の設定
+未対応：環境変数の設定
 ```
 # ~/.bashrc に一行追記
-export ROS_WORKSPACE=$HOME/catkin_ws
+# export ROS_WORKSPACE=$HOME/catkin_ws
 # or export ROS_WORKSPACE=$HOME/<your_workingspace>
 ```
 
