@@ -11,11 +11,16 @@ set(PROJECT_REARRANGE rearrange_pointcloud)
 project(${PROJECT_REARRANGE})
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 find_package(PCL 1.14)
 find_package(Eigen3 REQUIRED)
 find_package(PROJ REQUIRED)
+
+include_directories(
+  ${PROJ_INCLUDE_DIRS}
+)
 
 include_directories(
         ${PROJ_INCLUDE_DIRS}

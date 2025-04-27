@@ -14,6 +14,7 @@
 #include <getopt.h>
 #include <p2o.h>
 #include <proj.h>
+#include <proj.h>
 
 bool loadP2OFile( const char *p2ofile, p2o::Pose3DVec &nodes, std::vector<p2o::ErrorFunc3D*> &errorfuncs, std::vector<std::tuple<double, double, double>> &lla_data)
 {
@@ -82,7 +83,6 @@ bool loadP2OFile( const char *p2ofile, p2o::Pose3DVec &nodes, std::vector<p2o::E
 }
 
 Eigen::Vector3d get_lla_from_xyz(Eigen::Vector3d xyz, std::string epsg_code){
-
     Eigen::Vector3d ret_value;
 
     PJ_CONTEXT *C;
@@ -140,7 +140,7 @@ void sample_g2o_3d(const std::string &filename, int max_iter, int min_iter, doub
         Eigen::Vector3d result_lla;
         result_xyz << result[i].x , result[i].y , result[i].z ;
         result_lla = get_lla_from_xyz(result_xyz,epsg_code);
-        
+
         Eigen::Quaterniond q1 = nodes[i].rv.toQuaternion();
         Eigen::Quaterniond q2 = result[i].rv.toQuaternion();
         ofs << nodes[i].x << " " << nodes[i].y << " " << nodes[i].z << " "
