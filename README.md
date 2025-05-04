@@ -31,7 +31,7 @@ brew install mcap
 これらのソースコードを改変して使用しました。実行用のbashファイルを北陽電機 髙橋が作成しました。
 
 ## Requirements
-Ubuntu 20.04 ROS1 Noetic
+Ubuntu 22.04 ROS2 Humble
 
 This package is dependent on Eigen3, C++14, and pcl 1.14
 
@@ -72,19 +72,19 @@ hokuyo_lio and sync_lio
 # git clone https://github.com/Hokuyo-RD/hokuyo_lio.git
 # catkin build hokuyo_lio
 
-# 04/27 時点で未対応
+# 05/03 対応
 # sync_lio_pc
-# cd ~/catkin_ws/src
-# git clone https://github.com/Hokuyo-RD/sync_lio_pc.git
-# catkin build sync_lio_pc
+cd ~/colcon_ws/src
+git clone -b ros2 https://github.com/Hokuyo-RD/sync_lio_pc.git
+colcon build sync_lio_pc
 
 # hokuyo_slam
 cd ~/github
-git clone https://github.com/Hokuyo-RD/hokuyo_slam.git
+git clone -b ros2 https://github.com/Hokuyo-RD/hokuyo_slam.git
 cd hokuyo_slam
 
-export CMAKE_PREFIX_PATH=/opt/vtk8
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
+# export CMAKE_PREFIX_PATH=/opt/vtk8
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/vtk8/lib
 export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 
 mkdir build
@@ -96,13 +96,6 @@ python extract
 sudo apt-get install python3-pip
 pip3 install tqdm
 pip3 install open3d
-
-```
-未対応：環境変数の設定
-```
-# ~/.bashrc に一行追記
-# export ROS_WORKSPACE=$HOME/catkin_ws
-# or export ROS_WORKSPACE=$HOME/<your_workingspace>
 ```
 
 ## Usage
@@ -113,7 +106,7 @@ pip3 install open3d
 # config/config.csv
 オプション,指定値,デフォルト値
 gnss_topic,/fix,/fix,
-pointcloud_topic,/hokuyo3d3/hokuyo_cloud2,/hokuyo3d3/hokuyo_cloud2,
+pointcloud_topic,/hokuyo3d/hokuyo_cloud2,/hokuyo3d3/hokuyo_cloud2,
 lio_topic,/hokuyo_lio/sync_odom,/hokuyo_lio/sync_odom,
 ```
 3. Get ROSBAG for p2o 
@@ -123,6 +116,5 @@ lio_topic,/hokuyo_lio/sync_odom,/hokuyo_lio/sync_odom,
 ```
 4. Run p2o and utility
 ```bash
-./setup.bash
 ./hokuyo_slam.bash <lio_fix_pointcloud-rosbag> <output-directory>
 ```
