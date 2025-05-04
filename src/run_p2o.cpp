@@ -13,6 +13,7 @@
 #include <chrono>
 #include <getopt.h>
 #include <p2o.h>
+#include <proj.h>
 
 bool loadP2OFile( const char *p2ofile, p2o::Pose3DVec &nodes, std::vector<p2o::ErrorFunc3D*> &errorfuncs, std::vector<std::tuple<double, double, double>> &lla_data)
 {
@@ -80,7 +81,36 @@ bool loadP2OFile( const char *p2ofile, p2o::Pose3DVec &nodes, std::vector<p2o::E
     return true;
 }
 
-void sample_g2o_3d(const std::string &filename, int max_iter, int min_iter, double robust_thre)
+Eigen::Vector3d get_lla_from_xyz(Eigen::Vector3d xyz, std::string epsg_code){
+    Eigen::Vector3d ret_value;
+
+    PJ_CONTEXT *C;
+    PJ *P;
+    PJ *norm;
+    PJ_COORD a, b;
+
+    C = proj_context_create();
+    P = proj_create_crs_to_crs( C, epsg_code.c_str() , "EPSG:4326", NULL);
+
+    if (0 == P) {
+        ret_value = Eigen::Vector3d::Zero();
+    }
+    else{
+        a = proj_coord(xyz(1), xyz(0), 0, 0);
+        b = proj_trans(P, PJ_FWD, a);
+
+        ret_value(0) = b.xyz.x;
+        ret_value(1) = b.xyz.y;
+        ret_value(2) = xyz(2);
+    }
+
+    proj_destroy(P);
+    proj_context_destroy(C);
+
+    return ret_value;
+}
+
+void sample_g2o_3d(const std::string &filename, int max_iter, int min_iter, double robust_thre, std::string epsg_code)
 {
     std::string fname_in = filename + "_in.txt";
     std::string fname_out = filename + "_out.txt";
@@ -104,14 +134,19 @@ void sample_g2o_3d(const std::string &filename, int max_iter, int min_iter, doub
     ofs << std::fixed << std::setprecision(10);
     ofs2 << std::fixed << std::setprecision(10);
     for(int i=0; i<result.size(); i++) {
+        Eigen::Vector3d result_xyz;
+        Eigen::Vector3d result_lla;
+        result_xyz << result[i].x , result[i].y , result[i].z ;
+        result_lla = get_lla_from_xyz(result_xyz,epsg_code);
+
         Eigen::Quaterniond q1 = nodes[i].rv.toQuaternion();
         Eigen::Quaterniond q2 = result[i].rv.toQuaternion();
         ofs << nodes[i].x << " " << nodes[i].y << " " << nodes[i].z << " "
             << q1.x() << " " << q1.y() << " " << q1.z() << " " << q1.w() << std::endl;
         auto& [lat, lon, alt] = lla_data[i];
-        ofs2 << result[i].x << " " << result[i].y << " " << result[i].z << " "
+        ofs2 << result_xyz(0) << " " << result_xyz(1) << " " << result_xyz(2) << " "
              << q2.x() << " " << q2.y() << " " << q2.z() << " " << q2.w() << " "
-             << lat << " " << lon << " " << alt << std::endl;
+             << result_lla(0) << " " << result_lla(1) << " " << result_lla(2) << std::endl;
     }
     for (auto &err : error_funcs) {
         delete err;
@@ -126,6 +161,7 @@ static void show_usage_and_exit()
 
 int main(int argc, char *argv[])
 {
+    std::string epsg_code = "epsg:6674";
     int max_iter = 300;
     int min_iter = 50;
     double robust_threshold = 0.01;
@@ -150,7 +186,7 @@ int main(int argc, char *argv[])
     if (optind >= argc) {
         show_usage_and_exit();
     }
-    sample_g2o_3d(argv[optind], max_iter, min_iter, robust_threshold);
+    sample_g2o_3d(argv[optind], max_iter, min_iter, robust_threshold, epsg_code);
 
     return 0;
 }

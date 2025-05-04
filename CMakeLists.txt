@@ -10,11 +10,16 @@ project(${PROJECT_P2O})
 set(PROJECT_REARRANGE rearrange_pointcloud)
 project(${PROJECT_REARRANGE})
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 find_package(PCL 1.14)
 find_package(Eigen3 REQUIRED)
+find_package(PROJ REQUIRED)
+
+include_directories(
+  ${PROJ_INCLUDE_DIRS}
+)
 
 include_directories(include
         ${EIGEN3_INCLUDE_DIR}
@@ -25,7 +30,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_library(p2o SHARED src/p2o.cpp include/p2o.h)
 add_executable(run_p2o src/run_p2o.cpp)
-target_link_libraries(run_p2o p2o Eigen3::Eigen)
+target_link_libraries(run_p2o p2o Eigen3::Eigen ${PROJ_LIBRARIES})
 
 add_executable(${PROJECT_REARRANGE} src/rearrange_pointcloud.cpp)
 target_link_libraries(rearrange_pointcloud ${PCL_LIBRARIES} Eigen3::Eigen)
