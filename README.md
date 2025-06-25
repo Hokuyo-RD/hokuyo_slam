@@ -58,15 +58,7 @@ export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 ```
 hokuyo_lio and sync_lio
 ```bash
-# hokuyo_lio
-cd ~/catkin_ws/src
-git clone https://github.com/Hokuyo-RD/hokuyo_lio.git
-catkin build hokuyo_lio
-
-# sync_lio_pc
-cd ~/catkin_ws/src
-git clone https://github.com/Hokuyo-RD/sync_lio_pc.git
-catkin build sync_lio_pc
+# fast_lio
 
 # hokuyo_slam
 cd ~/github
