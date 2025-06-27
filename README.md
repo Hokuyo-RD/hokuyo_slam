@@ -67,16 +67,7 @@ export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 hokuyo_lio and sync_lio
 ```bash
 # 04/27 時点で未対応
-# hokuyo_lio
-# cd ~/catkin_ws/src
-# git clone https://github.com/Hokuyo-RD/hokuyo_lio.git
-# catkin build hokuyo_lio
-
-# 05/03 対応
-# sync_lio_pc
-cd ~/colcon_ws/src
-git clone -b ros2 https://github.com/Hokuyo-RD/sync_lio_pc.git
-colcon build sync_lio_pc
+# fast_lio
 
 # hokuyo_slam
 cd ~/github
