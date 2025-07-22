@@ -30,6 +30,8 @@ gnss_cov_thre = float(args[4])
 filename=os.path.normpath(os.path.join(os.getcwd(),args[1]))
 lio_topic_name=os.path.normpath(os.path.join(os.getcwd(),args[2]))
 gnss_topic_name=os.path.normpath(os.path.join(os.getcwd(),args[3]))
+gga_topic_name="/gga"
+gga_gps_qual=4
 
 # Sample convert to Japan Plane Rectangular Coordinate System No. 6
 transformer = Transformer.from_crs("epsg:4326", 'epsg:6674')
@@ -67,6 +69,8 @@ for topic, msg, t in bag.read_messages():
         vertices.append(f'VERTEX_SE3:QUAT {id} {pose.position.x} {pose.position.y} {pose.position.z} {qstr}')
 
     if topic==gnss_topic_name:
+        if (gga_gps_qual != 4) & (gga_gps_qual != 5):
+            continue
     	# print(msg.position_covariance[0]) # 2025/01/28 この共分散が高いと配列に要素が追加されていない。
         if (msg.status.status == 0 or msg.status.status == 2) and id > 0:
             if msg.position_covariance[0] < gnss_cov_thre and (t_since_epoch - prev_gnss_t > 3):
@@ -101,6 +105,9 @@ for topic, msg, t in bag.read_messages():
                 else:
                     np_lla_list=np.append(np_lla_list,np_lla,axis=0)
                 prev_gnss_t = t_since_epoch
+
+    if topic==gga_topic_name:
+        gga_gps_qual=msg.gps_qual
 
 bag.close()
 
