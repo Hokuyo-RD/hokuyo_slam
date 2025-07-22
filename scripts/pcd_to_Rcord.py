@@ -28,14 +28,13 @@ with open(out_p2o, "r") as f:
         print('file not found.')
 
 # p2o ファイルの並進移動量を格納する。
-p2ox_y_z = []
-ox, oy, oz, p2oq1_dummy, p2oq2_dummy, p2oq3_dummy, p2oq4_dummy, lat, lon, alt = map(float, p2o[10].split())
-p2ox, p2oy, p2oz, p2oq1, p2oq2, p2oq3, p2oq4, lat_dummy, lon_dummy, alt_dummy = map(float, p2o[1].split())
-p2ox_y_z.append([p2ox, p2oy, p2oz])
+# p2ox_y_z = []
+# ox, oy, oz, p2oq1_dummy, p2oq2_dummy, p2oq3_dummy, p2oq4_dummy, lat, lon, alt = map(float, p2o[10].split())
+ox, oy, oz, p2oq1, p2oq2, p2oq3, p2oq4, lat, lon, alt = map(float, p2o[1].split())
+# p2ox_y_z.append([p2ox, p2oy, p2oz])
 
 # 原点を配列に導入する。
 ox_y_z = []
-# ox, oy, oz = map(float, lines[11].split())
 ox_y_z.append([ox, oy, oz])
 oxyz = []
 o_x,o_y,o_z = map(float, lines[11].split())
@@ -66,9 +65,9 @@ with open(output_file, "w") as f:
 
 
 initx_y_z = []
-initx = p2ox - ox
-inity = p2oy - oy
-initz = p2oz - oz
+initx = ox - ox
+inity = oy - oy
+initz = oz - oz
 initx_y_z.append([initx,inity,initz,p2oq1,p2oq2,p2oq3,p2oq4])
 
 init_lat_lon_alt = []
