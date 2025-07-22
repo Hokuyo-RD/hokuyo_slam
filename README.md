@@ -1,6 +1,6 @@
 # hokuyo_slam
 
-このパッケージは、hokuyo_lioの軌跡をRTK-GNSSの情報を使って補正し、
+このパッケージは、lioの軌跡をRTK-GNSSの情報を使って補正し、
 補正した軌跡に沿って、YVTの3Dスキャン点群を並べて、
 緯度・軽度による絶対座標の情報を付与した3D点群地図を作成します。
 
@@ -58,15 +58,7 @@ export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/opt/pcl
 ```
 hokuyo_lio and sync_lio
 ```bash
-# hokuyo_lio
-cd ~/catkin_ws/src
-git clone https://github.com/Hokuyo-RD/hokuyo_lio.git
-catkin build hokuyo_lio
-
-# sync_lio_pc
-cd ~/catkin_ws/src
-git clone https://github.com/Hokuyo-RD/sync_lio_pc.git
-catkin build sync_lio_pc
+# fast_lio
 
 # hokuyo_slam
 cd ~/github
